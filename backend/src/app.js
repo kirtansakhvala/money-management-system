@@ -23,17 +23,21 @@ const normalizeOrigin = (origin) => {
   return `https://${trimmedOrigin}`;
 };
 
-const allowedOrigins = (process.env.CLIENT_URL || '')
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://money-management-system-q8pq.vercel.app',
+  ...(process.env.CLIENT_URL || '')
   .split(',')
   .map(normalizeOrigin)
-  .filter(Boolean);
+  .filter(Boolean),
+];
 
 const corsOptions = {
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
     if (!allowedOrigins.length) return callback(null, true);
     if (allowedOrigins.includes(origin)) return callback(null, true);
-    return callback(new Error('Not allowed by CORS'));
+    return callback(null, false);
   },
   credentials: true,
 };
