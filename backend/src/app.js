@@ -13,6 +13,31 @@ const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 
 const app = express();
 
+const normalizeOrigin = (origin) => {
+  if (!origin) return '';
+  const trimmedOrigin = origin.trim();
+  if (!trimmedOrigin) return '';
+  if (trimmedOrigin.startsWith('http://') || trimmedOrigin.startsWith('https://')) {
+    return trimmedOrigin;
+  }
+  return `https://${trimmedOrigin}`;
+};
+
+const allowedOrigins = (process.env.CLIENT_URL || '')
+  .split(',')
+  .map(normalizeOrigin)
+  .filter(Boolean);
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (!allowedOrigins.length) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+};
+
 // Create uploads directory if it doesn't exist
 const fs = require('fs');
 const uploadsDir = path.join(__dirname, '../../public/uploads');
@@ -21,7 +46,7 @@ if (!fs.existsSync(uploadsDir)) {
 }
 
 app.use(helmet());
-app.use(cors({ origin: process.env.CLIENT_URL || '*', credentials: true }));
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(morgan('dev'));
 
